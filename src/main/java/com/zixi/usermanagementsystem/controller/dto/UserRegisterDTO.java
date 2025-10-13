@@ -1,0 +1,18 @@
+package com.zixi.usermanagementsystem.controller.dto;
+
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserRegisterDTO {
+
+    private String account;
+
+    private String password;
+
+    private String checkPassword;
+}
