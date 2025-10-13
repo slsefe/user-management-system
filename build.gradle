@@ -30,6 +30,7 @@ dependencies {
     implementation 'org.flywaydb:flyway-mysql'
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
     implementation 'com.baomidou:mybatis-plus-spring-boot3-starter:3.5.6'
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
