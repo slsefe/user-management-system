@@ -3,6 +3,7 @@ package com.zixi.usermanagementsystem.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -87,6 +88,7 @@ public class User implements Serializable {
      * 是否删除，0-未删除，1-已删除
      */
     @TableField(value = "deleted")
+    @TableLogic(value = "0", delval = "1") // 配置逻辑删除
     private Integer deleted;
 
 }
