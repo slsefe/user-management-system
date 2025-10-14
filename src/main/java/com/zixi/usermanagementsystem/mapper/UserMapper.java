@@ -1,6 +1,6 @@
 package com.zixi.usermanagementsystem.mapper;
 
-import com.zixi.usermanagementsystem.domain.User;
+import com.zixi.usermanagementsystem.model.domain.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**

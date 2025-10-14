@@ -1,4 +1,4 @@
-package com.zixi.usermanagementsystem.domain;
+package com.zixi.usermanagementsystem.model.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

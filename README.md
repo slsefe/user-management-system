@@ -33,4 +33,15 @@
 - 逻辑
   - 参数校验：
   - 密码正确性校验
-  - 记录用户的登录态，存到服务器上（用后端springboot框架封装的服务器tomcat去记录）
+  - 记录用户的登录态（session），存到服务器上（用后端springboot框架封装的服务器tomcat去记录）
+  - 返回用户信息（敏感信息脱敏）
+
+
+# 技术点
+
+## cookie和session
+
+- 客户端在第一次请求服务端之后，服务端生成一个session，在响应体中返回给前端一个设置cookie的命令，并且返回sessionId；
+- 前端根据请求的响应体，设置cookie，保存到浏览器中
+- 前端再次请求服务端的时候，请求头带上cookie
+- 后端根据请求头的cookie，识别到sessionId，根据sessionId获取存储的信息（用户登录状态）
