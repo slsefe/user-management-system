@@ -2,6 +2,7 @@ package com.zixi.usermanagementsystem.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zixi.usermanagementsystem.constant.UserConstant;
 import com.zixi.usermanagementsystem.model.request.UserLoginRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
@@ -13,7 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
-import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author baiyin
@@ -27,7 +29,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private final UserMapper userMapper;
 
-    private static final String USER_LOGIN_STATE = "user_login_state";
+    private static final String SALT = "zixi";
 
     @Override
     public Long register(UserRegisterRequest userRegisterRequest) {
@@ -36,16 +38,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.eq("account", userRegisterRequest.getAccount());
         long count = userMapper.selectCount(queryWrapper);
         if (count > 0) {
+            // TODO: 统一返回编码
             return -1L;
         }
 
-        // 密码使用md5加密后存储
-        final String salt = UUID.randomUUID().toString().replace("-", "");
-        String password = DigestUtils.md5DigestAsHex((userRegisterRequest.getPassword()).getBytes());
-        // 保存到数据库
+        // 密码使用md5加密后存储，保存到数据库
         User user = new User();
         user.setAccount(userRegisterRequest.getAccount());
-        user.setPassword(password);
+        user.setPassword(encryptPassword(userRegisterRequest.getPassword()));
         int inserted = userMapper.insert(user);
         if (inserted == 0) {
             return -1L;
@@ -55,37 +55,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User login(UserLoginRequest userLoginRequest, HttpServletRequest request) {
-        final String salt = UUID.randomUUID().toString().replace("-", "");
-        String password = DigestUtils.md5DigestAsHex((userLoginRequest.getPassword()).getBytes());
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("account", userLoginRequest.getAccount());
-        queryWrapper.eq("password", password);
+        queryWrapper.eq("password", encryptPassword(userLoginRequest.getPassword()));
         User user = userMapper.selectOne(queryWrapper);
         if (user == null) {
             log.info("account or password is wrong");
             return null;
         }
 
-        // 用户脱敏
-        User returnUser = new User();
-        returnUser.setId(user.getId());
-        returnUser.setUsername(user.getUsername());
-        returnUser.setAccount(user.getAccount());
-        returnUser.setAvatarUrl(user.getAvatarUrl());
-        returnUser.setGender(user.getGender());
-        returnUser.setPhone(user.getPhone());
-        returnUser.setEmail(user.getEmail());
-        returnUser.setStatus(user.getStatus());
-        returnUser.setCreateTime(user.getCreateTime());
-        returnUser.setUpdateTime(user.getUpdateTime());
+        User userVO = user.buildUserVO();
 
         // 记录用户的登录状态
-        request.getSession().setAttribute(USER_LOGIN_STATE, returnUser);
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, userVO);
 
-        return returnUser;
+        return userVO;
+    }
+
+    private static String encryptPassword(String userRegisterRequest) {
+        return DigestUtils.md5DigestAsHex((userRegisterRequest + SALT).getBytes());
+    }
+
+    @Override
+    public List<User> queryUserList() {
+        return this.list().stream().map(User::buildUserVO).collect(Collectors.toList());
     }
 }
-
-
-
-

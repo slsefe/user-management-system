@@ -1,5 +1,6 @@
 package com.zixi.usermanagementsystem.controller;
 
+import com.zixi.usermanagementsystem.constant.UserConstant;
 import com.zixi.usermanagementsystem.model.request.UserLoginRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -35,12 +37,27 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> query() {
-        return userService.list();
+    public List<User> query(HttpServletRequest request) {
+        // 用户接口鉴权，仅管理员有权限
+        if (!isAdmin(request)) {
+            return Collections.emptyList();
+        }
+        return userService.queryUserList();
     }
 
     @DeleteMapping("/{userId}")
-    public Boolean delete(@PathVariable Long userId) {
+    public Boolean delete(@PathVariable Long userId, HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return false;
+        }
         return userService.removeById(userId);
+    }
+
+    private Boolean isAdmin(HttpServletRequest request) {
+        User currentUser = (User) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        if (currentUser == null) {
+            return false;
+        }
+        return currentUser.getRole() == UserConstant.ADMIN_ROLE;
     }
 }

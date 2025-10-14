@@ -6,6 +6,8 @@ import com.zixi.usermanagementsystem.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.List;
+
 /**
 * @author baiyin
 * @description 针对表【user】的数据库操作Service
@@ -27,4 +29,9 @@ public interface UserService extends IService<User> {
      */
     User login(UserLoginRequest userLoginRequest, HttpServletRequest httpServletRequest);
 
+    /**
+     * 返回全部用户列表
+     * @return 用户列表
+     */
+    List<User> queryUserList();
 }

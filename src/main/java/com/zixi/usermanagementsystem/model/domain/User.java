@@ -91,4 +91,30 @@ public class User implements Serializable {
     @TableLogic(value = "0", delval = "1") // 配置逻辑删除
     private Integer deleted;
 
+    /**
+     * 用户角色，0-普通用户，1-管理员
+     */
+    @TableField(value = "role")
+    private Integer role;
+
+    /**
+     * 用户返回信息，隐藏敏感信息
+     * @return 用户信息
+     */
+    public User buildUserVO() {
+        User user = new User();
+        user.setId(id);
+        user.setUsername(username);
+        user.setAccount(account);
+        user.setAvatarUrl(avatarUrl);
+        user.setGender(gender);
+        user.setPhone(phone);
+        user.setEmail(email);
+        user.setStatus(status);
+        user.setCreateTime(createTime);
+        user.setUpdateTime(updateTime);
+        user.setRole(role);
+        return user;
+    }
+
 }
