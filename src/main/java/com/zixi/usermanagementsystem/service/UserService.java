@@ -41,4 +41,11 @@ public interface UserService extends IService<User> {
      * @return 返回当前用户信息
      */
     User getCurrentUser(HttpServletRequest request);
+
+    /**
+     * 退出登录
+     * @param request
+     * @return
+     */
+    Void logout(HttpServletRequest request);
 }

@@ -41,6 +41,11 @@ public class UserController {
         return userService.getCurrentUser(request);
     }
 
+    @GetMapping("/logout")
+    public Void logout(HttpServletRequest request) {
+        return userService.logout(request);
+    }
+
     @GetMapping
     public List<User> query(HttpServletRequest request) {
         // 用户接口鉴权，仅管理员有权限

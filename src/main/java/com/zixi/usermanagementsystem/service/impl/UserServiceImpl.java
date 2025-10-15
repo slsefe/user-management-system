@@ -90,4 +90,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public List<User> queryUserList() {
         return this.list().stream().map(User::buildUserVO).collect(Collectors.toList());
     }
+
+    @Override
+    public Void logout(HttpServletRequest request) {
+        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        return null;
+    }
 }
