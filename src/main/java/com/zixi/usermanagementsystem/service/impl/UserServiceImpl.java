@@ -72,6 +72,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userVO;
     }
 
+    @Override
+    public User getCurrentUser(HttpServletRequest request) {
+        User user = (User) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        if (user == null) {
+            return null;
+        }
+        User currentUser = userMapper.selectById(user.getId());
+        return currentUser.buildUserVO();
+    }
+
     private static String encryptPassword(String userRegisterRequest) {
         return DigestUtils.md5DigestAsHex((userRegisterRequest + SALT).getBytes());
     }

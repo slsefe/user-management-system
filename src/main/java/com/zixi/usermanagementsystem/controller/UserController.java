@@ -36,6 +36,11 @@ public class UserController {
         return userService.login(userLoginRequest, request);
     }
 
+    @GetMapping("/current")
+    public User getCurrentUser(HttpServletRequest request) {
+        return userService.getCurrentUser(request);
+    }
+
     @GetMapping
     public List<User> query(HttpServletRequest request) {
         // 用户接口鉴权，仅管理员有权限
