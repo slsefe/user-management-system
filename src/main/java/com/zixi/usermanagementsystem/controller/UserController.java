@@ -1,5 +1,6 @@
 package com.zixi.usermanagementsystem.controller;
 
+import com.zixi.usermanagementsystem.common.BaseResponse;
 import com.zixi.usermanagementsystem.constant.UserConstant;
 import com.zixi.usermanagementsystem.model.request.UserLoginRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -27,43 +27,44 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public Long register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
-        return userService.register(userRegisterRequest);
+    public BaseResponse<Long> register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
+        return BaseResponse.success(userService.register(userRegisterRequest));
     }
 
     @PostMapping("/login")
-    public User login(@RequestBody @Valid UserLoginRequest userLoginRequest, HttpServletRequest request) {
-        return userService.login(userLoginRequest, request);
+    public BaseResponse<User> login(@RequestBody @Valid UserLoginRequest userLoginRequest, HttpServletRequest request) {
+        return BaseResponse.success(userService.login(userLoginRequest, request));
     }
 
     @GetMapping("/current")
-    public User getCurrentUser(HttpServletRequest request) {
-        return userService.getCurrentUser(request);
+    public BaseResponse<User> getCurrentUser(HttpServletRequest request) {
+        return BaseResponse.success(userService.getCurrentUser(request));
     }
 
     @PostMapping("/logout")
-    public void logout(HttpServletRequest request) {
+    public BaseResponse<Void> logout(HttpServletRequest request) {
         if (request == null) {
-            return;
+            return BaseResponse.success(null);
         }
         userService.logout(request);
+        return BaseResponse.success(null);
     }
 
     @GetMapping
-    public List<User> query(HttpServletRequest request) {
+    public BaseResponse<List<User>> query(HttpServletRequest request) {
         // 用户接口鉴权，仅管理员有权限
         if (!isAdmin(request)) {
-            return Collections.emptyList();
+            return BaseResponse.fail("no permission");
         }
-        return userService.queryUserList();
+        return BaseResponse.success(userService.queryUserList());
     }
 
     @DeleteMapping("/{userId}")
-    public Boolean delete(@PathVariable Long userId, HttpServletRequest request) {
+    public BaseResponse<Boolean> delete(@PathVariable Long userId, HttpServletRequest request) {
         if (!isAdmin(request)) {
-            return false;
+            return BaseResponse.fail("no permission");
         }
-        return userService.removeById(userId);
+        return BaseResponse.success(userService.removeById(userId));
     }
 
     private Boolean isAdmin(HttpServletRequest request) {
