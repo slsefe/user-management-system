@@ -41,9 +41,12 @@ public class UserController {
         return userService.getCurrentUser(request);
     }
 
-    @GetMapping("/logout")
-    public Void logout(HttpServletRequest request) {
-        return userService.logout(request);
+    @PostMapping("/logout")
+    public void logout(HttpServletRequest request) {
+        if (request == null) {
+            return;
+        }
+        userService.logout(request);
     }
 
     @GetMapping
