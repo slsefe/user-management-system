@@ -2,6 +2,8 @@ package com.zixi.usermanagementsystem.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zixi.usermanagementsystem.exception.BusinessException;
+import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.constant.UserConstant;
 import com.zixi.usermanagementsystem.model.request.UserLoginRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
@@ -38,8 +40,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.eq("account", userRegisterRequest.getAccount());
         long count = userMapper.selectCount(queryWrapper);
         if (count > 0) {
-            // TODO: 统一返回编码
-            return -1L;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "user account duplicated");
         }
 
         // 密码使用md5加密后存储，保存到数据库
@@ -48,7 +49,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPassword(encryptPassword(userRegisterRequest.getPassword()));
         int inserted = userMapper.insert(user);
         if (inserted == 0) {
-            return -1L;
+            throw new BusinessException(ErrorCode.NULL_ERROR, "register user failed");
         }
         return user.getId();
     }
@@ -60,8 +61,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.eq("password", encryptPassword(userLoginRequest.getPassword()));
         User user = userMapper.selectOne(queryWrapper);
         if (user == null) {
-            log.info("account or password is wrong");
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR, "account or password is wrong");
         }
 
         User userVO = user.buildUserVO();
@@ -76,7 +76,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User getCurrentUser(HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
         if (user == null) {
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR, "current user is null");
         }
         User currentUser = userMapper.selectById(user.getId());
         return currentUser.buildUserVO();

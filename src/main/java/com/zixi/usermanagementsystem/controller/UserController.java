@@ -1,6 +1,7 @@
 package com.zixi.usermanagementsystem.controller;
 
 import com.zixi.usermanagementsystem.common.BaseResponse;
+import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.constant.UserConstant;
 import com.zixi.usermanagementsystem.model.request.UserLoginRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
@@ -28,6 +29,9 @@ public class UserController {
 
     @PostMapping("/register")
     public BaseResponse<Long> register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
+        if (userRegisterRequest == null) {
+            return BaseResponse.fail(ErrorCode.NULL_ERROR);
+        }
         return BaseResponse.success(userService.register(userRegisterRequest));
     }
 
@@ -54,7 +58,7 @@ public class UserController {
     public BaseResponse<List<User>> query(HttpServletRequest request) {
         // 用户接口鉴权，仅管理员有权限
         if (!isAdmin(request)) {
-            return BaseResponse.fail("no permission");
+            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
         return BaseResponse.success(userService.queryUserList());
     }
@@ -62,7 +66,7 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public BaseResponse<Boolean> delete(@PathVariable Long userId, HttpServletRequest request) {
         if (!isAdmin(request)) {
-            return BaseResponse.fail("no permission");
+            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
         return BaseResponse.success(userService.removeById(userId));
     }
