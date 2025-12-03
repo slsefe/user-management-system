@@ -1,5 +1,7 @@
 package com.zixi.usermanagementsystem.configuration;
 
+import com.zixi.usermanagementsystem.security.SerializableRequestCache;
+import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,6 +15,13 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Resource
+    private SerializableRequestCache requestCache;
+
+    public SecurityConfig(SerializableRequestCache requestCache) {
+        this.requestCache = requestCache;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -21,6 +30,8 @@ public class SecurityConfig {
 
                 // Session 策略：由 Spring Session 管理（Redis）
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
+                .requestCache(cache -> cache.requestCache(requestCache))
 
                 // 认证方式：表单登录，但自定义处理 URL
                 .formLogin(form -> form
@@ -40,7 +51,9 @@ public class SecurityConfig {
 
                 // 自定义登出
                 .logout(logout -> logout
-                        .logoutUrl("/api/users/logout")           // 登出接口
+                        .logoutUrl("/api/users/logout")// 登出接口
+                        .deleteCookies("SESSION")
+                        .invalidateHttpSession(true)
                         .logoutSuccessHandler((request, response, authentication) -> {
                             response.setStatus(200);
                             response.getWriter().print("Logged out");
@@ -50,7 +63,7 @@ public class SecurityConfig {
                 // 授权规则
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/register", "/api/users/login").permitAll() // 允许注册和登录
-                        .requestMatchers("/api/users/me").authenticated()
+                        .requestMatchers("/api/users/current").authenticated()
                         .anyRequest().authenticated()       // 其他请求需登录
                 );
 
