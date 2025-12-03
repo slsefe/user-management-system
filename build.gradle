@@ -31,11 +31,14 @@ dependencies {
     implementation 'org.springframework.session:spring-session-data-redis'
     // 添加jackson支持LocalDateTime类型
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    // spring-boot-security，用于接口认证、鉴权
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
     implementation 'com.baomidou:mybatis-plus-spring-boot3-starter:3.5.6'
     implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'

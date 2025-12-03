@@ -10,9 +10,11 @@ import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.service.UserService;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -29,7 +31,11 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    @Resource
     private final UserMapper userMapper;
+
+    @Resource
+    private final PasswordEncoder passwordEncoder;
 
     private static final String SALT = "zixi";
 
@@ -43,10 +49,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "user account duplicated");
         }
 
-        // 密码使用md5加密后存储，保存到数据库
+        // 密码使用BCrypt加密后存储，保存到数据库
         User user = new User();
         user.setAccount(userRegisterRequest.getAccount());
-        user.setPassword(encryptPassword(userRegisterRequest.getPassword()));
+        user.setPassword(passwordEncoder.encode(userRegisterRequest.getPassword()));
         int inserted = userMapper.insert(user);
         if (inserted == 0) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "register user failed");
