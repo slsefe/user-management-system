@@ -4,7 +4,7 @@ import com.zixi.usermanagementsystem.model.request.UserLoginRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public interface UserService extends IService<User> {
      * @param userLoginRequest
      * @return 如果账号密码正确，返回用户信息；如果账号不存在或者密码错误，返回null
      */
-    User login(UserLoginRequest userLoginRequest, HttpServletRequest httpServletRequest);
+    User login(UserLoginRequest userLoginRequest, HttpSession httpSession);
 
     /**
      * 返回全部用户列表
@@ -37,15 +37,15 @@ public interface UserService extends IService<User> {
 
     /**
      * 获取当前用户
-     * @param request
+     * @param httpSession
      * @return 返回当前用户信息
      */
-    User getCurrentUser(HttpServletRequest request);
+    User getCurrentUser(HttpSession httpSession);
 
     /**
      * 退出登录
-     * @param request
+     * @param httpSession
      * @return
      */
-    void logout(HttpServletRequest request);
+    void logout(HttpSession httpSession);
 }

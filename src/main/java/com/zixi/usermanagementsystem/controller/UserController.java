@@ -8,6 +8,7 @@ import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -38,21 +39,21 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public BaseResponse<User> login(@RequestBody @Valid UserLoginRequest userLoginRequest, HttpServletRequest request) {
-        return BaseResponse.success(userService.login(userLoginRequest, request));
+    public BaseResponse<User> login(@RequestBody @Valid UserLoginRequest userLoginRequest, HttpSession httpSession) {
+        return BaseResponse.success(userService.login(userLoginRequest, httpSession));
     }
 
     @GetMapping("/current")
-    public BaseResponse<User> getCurrentUser(HttpServletRequest request) {
-        return BaseResponse.success(userService.getCurrentUser(request));
+    public BaseResponse<User> getCurrentUser(HttpSession httpSession) {
+        return BaseResponse.success(userService.getCurrentUser(httpSession));
     }
 
     @PostMapping("/logout")
-    public BaseResponse<Void> logout(HttpServletRequest request) {
-        if (request == null) {
+    public BaseResponse<Void> logout(HttpSession httpSession) {
+        if (httpSession == null) {
             return BaseResponse.success(null);
         }
-        userService.logout(request);
+        userService.logout(httpSession);
         return BaseResponse.success(null);
     }
 

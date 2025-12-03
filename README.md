@@ -1,5 +1,14 @@
 # Getting Started
 
+### docker启动Redis
+```shell
+docker run -d \
+  --name redis-server \
+  -p 6379:6379 \
+  redis:latest \
+  redis-server --requirepass "p@ssw0rd"
+```
+
 ## 需求描述
 
 - 用户可以注册账号

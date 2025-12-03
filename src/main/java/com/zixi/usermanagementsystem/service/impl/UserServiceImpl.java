@@ -10,7 +10,7 @@ import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.service.UserService;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,7 +55,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public User login(UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    public User login(UserLoginRequest userLoginRequest, HttpSession httpSession) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("account", userLoginRequest.getAccount());
         queryWrapper.eq("password", encryptPassword(userLoginRequest.getPassword()));
@@ -67,14 +67,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User userVO = user.buildUserVO();
 
         // 记录用户的登录状态
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, userVO);
+        httpSession.setAttribute(UserConstant.USER_LOGIN_STATE, userVO);
 
         return userVO;
     }
 
     @Override
-    public User getCurrentUser(HttpServletRequest request) {
-        User user = (User) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+    public User getCurrentUser(HttpSession httpSession) {
+        User user = (User) httpSession.getAttribute(UserConstant.USER_LOGIN_STATE);
         if (user == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "current user is null");
         }
@@ -92,7 +92,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public void logout(HttpServletRequest request) {
-        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+    public void logout(HttpSession httpSession) {
+        httpSession.invalidate();
     }
 }
