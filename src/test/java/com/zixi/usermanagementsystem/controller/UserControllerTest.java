@@ -5,23 +5,19 @@ import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
+import com.zixi.usermanagementsystem.model.request.UserUpdateRequest;
 import com.zixi.usermanagementsystem.service.UserService;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextImpl;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,6 +27,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.securityContext;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -217,6 +214,99 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data.account").value("testuser"));
 
         // 5. 清理 SecurityContext
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试更新用户资料接口 - 未登录
+     * 验证：未登录用户调用 PUT /profile 时，返回未登录错误
+     */
+    @Test
+    void testUpdateProfileNotLogin() throws Exception {
+        UserUpdateRequest request = new UserUpdateRequest();
+        request.setUsername("新用户名");
+
+        mockMvc.perform(put("/api/users/profile")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ErrorCode.NO_LOGIN.getCode()));
+    }
+
+    /**
+     * 测试更新用户资料接口 - 成功更新
+     * 验证：已登录用户更新资料成功
+     */
+    @Test
+    void testUpdateProfileSuccess() throws Exception {
+        // 1. 准备更新请求
+        UserUpdateRequest request = new UserUpdateRequest();
+        request.setUsername("新用户名");
+        request.setGender(1);
+        request.setPhone("13900139000");
+        request.setEmail("new@example.com");
+
+        // 2. 创建更新后的用户
+        User updatedUser = new User();
+        updatedUser.setId(1L);
+        updatedUser.setUsername("新用户名");
+        updatedUser.setAccount("testuser");
+        updatedUser.setGender(1);
+        updatedUser.setPhone("13900139000");
+        updatedUser.setEmail("new@example.com");
+
+        // 3. 手动设置 SecurityContext
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("testuser", null,
+                        java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // 4. Mock Service 层返回更新后的用户
+        when(userService.updateUserInfo("testuser", request)).thenReturn(updatedUser);
+
+        // 5. 执行请求并验证响应
+        mockMvc.perform(put("/api/users/profile")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value(ErrorCode.SUCCESS.getCode()))
+                .andExpect(jsonPath("$.data.username").value("新用户名"))
+                .andExpect(jsonPath("$.data.gender").value(1));
+
+        // 6. 清理 SecurityContext
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试更新用户资料接口 - 参数校验失败
+     * 验证：手机号格式不正确时，返回 400
+     */
+    @Test
+    void testUpdateProfileInvalidPhone() throws Exception {
+        // 1. 准备无效请求（手机号格式错误）
+        UserUpdateRequest request = new UserUpdateRequest();
+        request.setPhone("12345");  // 不符合手机号格式
+
+        // 2. 手动设置 SecurityContext
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("testuser", null,
+                        java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // 3. 执行请求并验证响应
+        mockMvc.perform(put("/api/users/profile")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        // 4. 清理 SecurityContext
         SecurityContextHolder.clearContext();
     }
 }
