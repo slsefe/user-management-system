@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zixi.usermanagementsystem.common.PageResult;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
 import com.zixi.usermanagementsystem.model.domain.User;
+import com.zixi.usermanagementsystem.constant.UserRoleEnum;
 import com.zixi.usermanagementsystem.model.request.UserQueryRequest;
+import com.zixi.usermanagementsystem.model.request.UserRoleUpdateRequest;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -158,6 +160,32 @@ public class UserManageService extends ServiceImpl<UserMapper, User> {
         }
 
         user.setStatus(status);
+        int updated = userMapper.updateById(user);
+        return updated > 0;
+    }
+
+    /**
+     * 更新用户角色
+     * @param userId 用户ID
+     * @param roleUpdateRequest 角色更新请求
+     * @return 是否更新成功
+     */
+    public Boolean updateUserRole(Long userId, UserRoleUpdateRequest roleUpdateRequest) {
+        if (userId == null || roleUpdateRequest == null || roleUpdateRequest.getRole() == null) {
+            return false;
+        }
+
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return false;
+        }
+
+        // 如果角色相同，无需更新
+        if (user.getRole() != null && user.getRole().equals(roleUpdateRequest.getRole())) {
+            return true;
+        }
+
+        user.setRole(roleUpdateRequest.getRole());
         int updated = userMapper.updateById(user);
         return updated > 0;
     }
