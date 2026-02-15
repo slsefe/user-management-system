@@ -2,8 +2,11 @@ package com.zixi.usermanagementsystem.controller;
 
 import com.zixi.usermanagementsystem.common.BaseResponse;
 import com.zixi.usermanagementsystem.common.ErrorCode;
+import com.zixi.usermanagementsystem.common.PageResult;
 import com.zixi.usermanagementsystem.model.domain.User;
+import com.zixi.usermanagementsystem.model.request.UserQueryRequest;
 import com.zixi.usermanagementsystem.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,6 +15,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,10 +35,24 @@ public class AdminController {
     private final UserService userService;
 
     /**
-     * 获取所有用户列表
+     * 分页查询用户列表
+     * @param queryRequest 查询请求
+     * @return 分页结果
+     */
+    @PostMapping("/users/query")
+    public BaseResponse<PageResult<User>> queryUserPage(@RequestBody @Valid UserQueryRequest queryRequest) {
+        if (!isAdmin()) {
+            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
+        }
+        return BaseResponse.success(userService.queryUserPage(queryRequest));
+    }
+
+    /**
+     * 获取所有用户列表（已废弃，请使用 POST /users/query）
      * @return 用户列表
      */
     @GetMapping("/users")
+    @Deprecated
     public BaseResponse<List<User>> queryAllUsers() {
         if (!isAdmin()) {
             return BaseResponse.fail(ErrorCode.NO_PERMISSION);

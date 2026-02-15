@@ -1,13 +1,17 @@
 package com.zixi.usermanagementsystem.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zixi.usermanagementsystem.common.ErrorCode;
+import com.zixi.usermanagementsystem.common.PageResult;
 import com.zixi.usermanagementsystem.exception.BusinessException;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserChangePasswordRequest;
 import com.zixi.usermanagementsystem.model.request.UserLoginRequest;
+import com.zixi.usermanagementsystem.model.request.UserQueryRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.request.UserUpdateRequest;
 import jakarta.annotation.Resource;
@@ -198,5 +202,68 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (updated == 0) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "修改密码失败");
         }
+    }
+
+    /**
+     * 分页查询用户列表
+     * @param queryRequest 查询请求
+     * @return 分页结果
+     */
+    public PageResult<User> queryUserPage(UserQueryRequest queryRequest) {
+        // 参数校验
+        long pageNum = queryRequest.getPageNum() != null ? queryRequest.getPageNum() : 1;
+        long pageSize = queryRequest.getPageSize() != null ? queryRequest.getPageSize() : 10;
+        if (pageSize > 100) {
+            pageSize = 100; // 限制每页最大100条
+        }
+
+        // 构建查询条件
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+
+        // 关键词搜索（模糊匹配用户名或账号）
+        if (queryRequest.getKeyword() != null && !queryRequest.getKeyword().isEmpty()) {
+            queryWrapper.and(w -> w.like("username", queryRequest.getKeyword())
+                    .or().like("account", queryRequest.getKeyword()));
+        }
+
+        // 角色过滤
+        if (queryRequest.getRole() != null && !queryRequest.getRole().isEmpty()) {
+            queryWrapper.eq("role", queryRequest.getRole());
+        }
+
+        // 性别过滤
+        if (queryRequest.getGender() != null) {
+            queryWrapper.eq("gender", queryRequest.getGender());
+        }
+
+        // 状态过滤
+        if (queryRequest.getStatus() != null) {
+            queryWrapper.eq("status", queryRequest.getStatus());
+        }
+
+        // 创建时间范围
+        if (queryRequest.getCreateTimeStart() != null) {
+            queryWrapper.ge("create_time", queryRequest.getCreateTimeStart());
+        }
+        if (queryRequest.getCreateTimeEnd() != null) {
+            queryWrapper.le("create_time", queryRequest.getCreateTimeEnd());
+        }
+
+        // 按创建时间倒序
+        queryWrapper.orderByDesc("create_time");
+
+        // 分页查询
+        Page<User> page = new Page<>(pageNum, pageSize);
+        IPage<User> userPage = this.page(page, queryWrapper);
+
+        // 转换为 VO
+        List<User> records = userPage.getRecords().stream()
+                .map(User::buildUserVO)
+                .collect(Collectors.toList());
+
+        long total = userPage.getTotal();
+        long totalPages = (total + pageSize - 1) / pageSize;
+
+        return new PageResult<>(records, total, pageNum, pageSize, totalPages);
     }
 }
