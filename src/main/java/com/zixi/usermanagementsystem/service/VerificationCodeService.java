@@ -28,6 +28,9 @@ public class VerificationCodeService extends ServiceImpl<VerificationCodeMapper,
     @Resource
     private TencentSmsService tencentSmsService;
 
+    @Resource
+    private EmailService emailService;
+
     /**
      * 验证码有效期（分钟）
      */
@@ -180,22 +183,24 @@ public class VerificationCodeService extends ServiceImpl<VerificationCodeMapper,
     }
 
     /**
-     * 发送验证码到目标（集成腾讯云短信）
+     * 发送验证码到目标（集成腾讯云短信和邮件）
      * @param target 目标
      * @param targetType 目标类型
      * @param code 验证码
      */
     private void sendCodeToTarget(String target, String targetType, String code) {
+        boolean sent;
         if (VerificationCode.TARGET_TYPE_PHONE.equals(targetType)) {
             // 调用腾讯云短信服务发送
-            boolean sent = tencentSmsService.sendVerificationCode(target, code);
-            if (!sent) {
-                // 如果发送失败，抛出异常（事务回滚，不会保存验证码）
-                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "短信发送失败，请稍后重试");
-            }
+            sent = tencentSmsService.sendVerificationCode(target, code);
         } else {
-            // TODO: 邮件发送待实现
-            log.info("【模拟发送邮件】邮箱: {}, 验证码: {}", target, code);
+            // 调用邮件服务发送
+            sent = emailService.sendVerificationCode(target, code);
+        }
+
+        if (!sent) {
+            // 如果发送失败，抛出异常（事务回滚，不会保存验证码）
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "验证码发送失败，请稍后重试");
         }
     }
 }
