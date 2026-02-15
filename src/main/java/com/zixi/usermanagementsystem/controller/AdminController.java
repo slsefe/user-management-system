@@ -5,6 +5,7 @@ import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.common.PageResult;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserQueryRequest;
+import com.zixi.usermanagementsystem.model.request.UserRoleUpdateRequest;
 import com.zixi.usermanagementsystem.service.UserManageService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -100,6 +102,20 @@ public class AdminController {
             return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
         return BaseResponse.success(userManageService.updateUserStatus(userId, STATUS_NORMAL));
+    }
+
+    /**
+     * 修改用户角色
+     * @param userId 用户ID
+     * @param roleUpdateRequest 角色更新请求
+     * @return 是否修改成功
+     */
+    @PutMapping("/users/{userId}/role")
+    public BaseResponse<Boolean> updateUserRole(@PathVariable Long userId, @RequestBody @Valid UserRoleUpdateRequest roleUpdateRequest) {
+        if (!isAdmin()) {
+            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
+        }
+        return BaseResponse.success(userManageService.updateUserRole(userId, roleUpdateRequest));
     }
 
     /**
