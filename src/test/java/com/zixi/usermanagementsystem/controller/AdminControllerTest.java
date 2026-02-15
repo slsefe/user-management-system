@@ -3,9 +3,11 @@ package com.zixi.usermanagementsystem.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.common.PageResult;
+import com.zixi.usermanagementsystem.constant.UserRoleEnum;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserQueryRequest;
+import com.zixi.usermanagementsystem.model.request.UserRoleUpdateRequest;
 import com.zixi.usermanagementsystem.service.UserManageService;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +33,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -290,6 +293,132 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.username").value("测试用户"));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试修改用户角色 - 未登录
+     */
+    @Test
+    void testUpdateUserRoleNotLogin() throws Exception {
+        UserRoleUpdateRequest request = new UserRoleUpdateRequest();
+        request.setRole(UserRoleEnum.ADMIN);
+
+        mockMvc.perform(put("/api/admin/users/1/role")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ErrorCode.NO_PERMISSION.getCode()));
+    }
+
+    /**
+     * 测试修改用户角色 - 普通用户权限不足
+     */
+    @Test
+    void testUpdateUserRoleNoPermission() throws Exception {
+        // 设置普通用户权限
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("testuser", null,
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        UserRoleUpdateRequest request = new UserRoleUpdateRequest();
+        request.setRole(UserRoleEnum.ADMIN);
+
+        mockMvc.perform(put("/api/admin/users/1/role")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ErrorCode.NO_PERMISSION.getCode()));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试修改用户角色 - 管理员成功修改
+     */
+    @Test
+    void testUpdateUserRoleSuccess() throws Exception {
+        // 设置管理员权限
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("admin", null,
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        UserRoleUpdateRequest request = new UserRoleUpdateRequest();
+        request.setRole(UserRoleEnum.ADMIN);
+
+        // Mock Service 返回成功
+        when(userManageService.updateUserRole(eq(1L), any(UserRoleUpdateRequest.class))).thenReturn(true);
+
+        mockMvc.perform(put("/api/admin/users/1/role")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value(ErrorCode.SUCCESS.getCode()))
+                .andExpect(jsonPath("$.data").value(true));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试修改用户角色 - 用户不存在
+     */
+    @Test
+    void testUpdateUserRoleNotFound() throws Exception {
+        // 设置管理员权限
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("admin", null,
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        UserRoleUpdateRequest request = new UserRoleUpdateRequest();
+        request.setRole(UserRoleEnum.USER);
+
+        // Mock Service 返回失败（用户不存在）
+        when(userManageService.updateUserRole(eq(999L), any(UserRoleUpdateRequest.class))).thenReturn(false);
+
+        mockMvc.perform(put("/api/admin/users/999/role")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").value(false));
+
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试修改用户角色 - 角色为空
+     */
+    @Test
+    void testUpdateUserRoleNullRole() throws Exception {
+        // 设置管理员权限
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("admin", null,
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // 创建请求但不设置角色
+        UserRoleUpdateRequest request = new UserRoleUpdateRequest();
+
+        mockMvc.perform(put("/api/admin/users/1/role")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
 
         SecurityContextHolder.clearContext();
     }
