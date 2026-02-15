@@ -1,51 +1,68 @@
-package com.zixi.usermanagementsystem.service;
+package com.zixi.usermanagementsystem.service.impl;
 
-import com.zixi.usermanagementsystem.model.request.UserLoginRequest;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zixi.usermanagementsystem.exception.BusinessException;
+import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
-import com.baomidou.mybatisplus.extension.service.IService;
-import jakarta.servlet.http.HttpSession;
+import com.zixi.usermanagementsystem.mapper.UserMapper;
+import jakarta.annotation.Resource;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
-* @author baiyin
-* @description 针对表【user】的数据库操作Service
-* @createDate 2025-10-13 19:43:57
-*/
-public interface UserService extends IService<User> {
+ * @author baiyin
+ * @description 针对表【user】的数据库操作Service实现
+ * @createDate 2025-10-13 19:43:57
+ */
+@Slf4j
+@Service
+@AllArgsConstructor
+public class UserService extends ServiceImpl<UserMapper, User> {
+
+    @Resource
+    private final UserMapper userMapper;
+
+    @Resource
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 用户注册
-     * @param userRegisterRequest
-     * @return 用户注册的账号id
+     * @param userRegisterRequest 用户注册请求
+     * @return 用户ID
      */
-    Long register(UserRegisterRequest userRegisterRequest);
+    public Long register(UserRegisterRequest userRegisterRequest) {
+        // 用户账号校验：不能和已有的重复
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("account", userRegisterRequest.getAccount());
+        long count = userMapper.selectCount(queryWrapper);
+        if (count > 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "user account duplicated");
+        }
+
+        // 密码使用BCrypt加密后存储，保存到数据库
+        User user = new User();
+        user.setAccount(userRegisterRequest.getAccount());
+        user.setPassword(passwordEncoder.encode(userRegisterRequest.getPassword()));
+        int inserted = userMapper.insert(user);
+        if (inserted == 0) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "register user failed");
+        }
+        return user.getId();
+    }
 
     /**
-     * 用户登录
-     * @param userLoginRequest
-     * @return 如果账号密码正确，返回用户信息；如果账号不存在或者密码错误，返回null
-     */
-    User login(UserLoginRequest userLoginRequest, HttpSession httpSession);
-
-    /**
-     * 返回全部用户列表
+     * 查询所有用户
      * @return 用户列表
      */
-    List<User> queryUserList();
+    public List<User> queryUserList() {
+        return this.list().stream().map(User::buildUserVO).collect(Collectors.toList());
+    }
 
-    /**
-     * 获取当前用户
-     * @param httpSession
-     * @return 返回当前用户信息
-     */
-    User getCurrentUser(HttpSession httpSession);
-
-    /**
-     * 退出登录
-     * @param httpSession
-     * @return
-     */
-    void logout(HttpSession httpSession);
 }
