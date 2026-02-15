@@ -3,13 +3,24 @@ package com.zixi.usermanagementsystem.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
+import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.service.UserService;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.securityContext;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -156,5 +168,55 @@ class UserControllerTest {
         // 模拟未认证的请求（无 @WithMockUser）
         mockMvc.perform(get("/api/users/current"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    /**
+     * 测试获取用户资料接口 - 未登录
+     * 验证：未登录用户调用 /profile 时，返回未登录错误
+     */
+    @Test
+    void testGetProfileNotLogin() throws Exception {
+        mockMvc.perform(get("/api/users/profile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ErrorCode.NO_LOGIN.getCode()));
+    }
+
+    /**
+     * 测试获取用户资料接口 - 已登录
+     * 验证：已登录用户调用 /profile 时，返回用户信息（VO）
+     */
+    @Test
+    void testGetProfileSuccess() throws Exception {
+        // 1. 创建模拟用户
+        User mockUser = new User();
+        mockUser.setId(1L);
+        mockUser.setUsername("测试用户");
+        mockUser.setAccount("testuser");
+        mockUser.setGender(1);
+        mockUser.setPhone("13800138000");
+        mockUser.setEmail("test@example.com");
+
+        // 2. 手动设置 SecurityContext（因为禁用了安全过滤器）
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("testuser", null,
+                        java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // 3. Mock Service 层返回用户信息
+        when(userService.getUserByAccount("testuser")).thenReturn(mockUser);
+
+        // 4. 执行请求并验证响应
+        mockMvc.perform(get("/api/users/profile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value(ErrorCode.SUCCESS.getCode()))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.username").value("测试用户"))
+                .andExpect(jsonPath("$.data.account").value("testuser"));
+
+        // 5. 清理 SecurityContext
+        SecurityContextHolder.clearContext();
     }
 }
