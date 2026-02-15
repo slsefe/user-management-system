@@ -44,6 +44,8 @@ dependencies {
     implementation 'org.apache.dubbo:dubbo-dependencies-zookeeper-curator5:3.2.5'
     // 腾讯云短信 SDK
     implementation 'com.tencentcloudapi:tencentcloud-sdk-java:3.1.1136'
+    // Spring Mail 邮件发送
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'

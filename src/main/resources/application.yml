@@ -26,7 +26,34 @@ spring:
 #          min-idle: 0
 #          max-idle: 8
 #          max-active: 8
-
+# 邮件服务配置（以 QQ 邮箱为例）
+# 其他邮箱请参考对应邮箱的 SMTP 设置
+  mail:
+    # 是否启用邮件发送（默认关闭，配置完成后设为 true）
+    enabled: false
+    # SMTP 服务器地址
+    host: smtp.qq.com
+    # SMTP 端口（QQ邮箱使用 587）
+    port: 587
+    # 发件人邮箱
+    username: your-email@qq.com
+    # 邮箱授权码（不是登录密码，在邮箱设置中生成）
+    password: your-authorization-code
+    # 协议
+    protocol: smtp
+    # 编码
+    default-encoding: UTF-8
+    # SMTP 配置
+    smtp:
+      # 开启 SSL
+      ssl:
+        enable: true
+      # 开启认证
+      auth: true
+      # 开启 STARTTLS
+      starttls:
+        enable: true
+        required: true
 
 server:
   port: 8080
