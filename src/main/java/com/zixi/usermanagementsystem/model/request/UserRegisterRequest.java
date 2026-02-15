@@ -2,6 +2,7 @@ package com.zixi.usermanagementsystem.model.request;
 
 
 import com.zixi.usermanagementsystem.validator.PasswordValid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,4 +25,20 @@ public class UserRegisterRequest implements Serializable {
     private String password;
 
     private String checkPassword;
+
+    /**
+     * 手机号（与邮箱二选一）
+     */
+    private String phone;
+
+    /**
+     * 邮箱（与手机号二选一）
+     */
+    private String email;
+
+    /**
+     * 验证码
+     */
+    @NotBlank(message = "验证码不能为空")
+    private String verificationCode;
 }
