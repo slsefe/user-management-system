@@ -2,12 +2,14 @@ package com.zixi.usermanagementsystem.controller;
 
 import com.zixi.usermanagementsystem.common.BaseResponse;
 import com.zixi.usermanagementsystem.common.ErrorCode;
+import com.zixi.usermanagementsystem.model.request.SendCodeRequest;
 import com.zixi.usermanagementsystem.model.request.UserChangePasswordRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.request.UserUpdateRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.service.UserAuthService;
 import com.zixi.usermanagementsystem.service.UserProfileService;
+import com.zixi.usermanagementsystem.service.VerificationCodeService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,7 @@ public class UserController {
 
     private final UserAuthService userAuthService;
     private final UserProfileService userProfileService;
+    private final VerificationCodeService verificationCodeService;
 
     @PostMapping("/register")
     public BaseResponse<Long> register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
@@ -41,6 +44,16 @@ public class UserController {
             return BaseResponse.fail(ErrorCode.NULL_ERROR);
         }
         return BaseResponse.success(userAuthService.register(userRegisterRequest));
+    }
+
+    /**
+     * 发送注册验证码
+     * @param sendCodeRequest 发送验证码请求
+     * @return 是否发送成功
+     */
+    @PostMapping("/send-code")
+    public BaseResponse<Boolean> sendRegisterCode(@RequestBody @Valid SendCodeRequest sendCodeRequest) {
+        return BaseResponse.success(verificationCodeService.sendRegisterCode(sendCodeRequest.getTarget()));
     }
 
     @GetMapping("/current")
