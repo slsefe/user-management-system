@@ -23,6 +23,16 @@ import java.util.stream.Collectors;
 @Service
 public class UserManageService extends ServiceImpl<UserMapper, User> {
 
+    /**
+     * 用户正常状态
+     */
+    public static final int STATUS_NORMAL = 0;
+
+    /**
+     * 用户禁用状态
+     */
+    public static final int STATUS_DISABLED = 1;
+
     @Resource
     private final UserMapper userMapper;
 
@@ -121,5 +131,34 @@ public class UserManageService extends ServiceImpl<UserMapper, User> {
      */
     public Boolean removeUserById(Long userId) {
         return this.removeById(userId);
+    }
+
+    /**
+     * 更新用户状态（禁用/启用）
+     * @param userId 用户ID
+     * @param status 状态：0-正常，1-禁用
+     * @return 是否更新成功
+     */
+    public Boolean updateUserStatus(Long userId, Integer status) {
+        if (userId == null) {
+            return false;
+        }
+        if (status == null || (status != STATUS_NORMAL && status != STATUS_DISABLED)) {
+            return false;
+        }
+
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return false;
+        }
+
+        // 如果状态相同，无需更新
+        if (user.getStatus() != null && user.getStatus().equals(status)) {
+            return true;
+        }
+
+        user.setStatus(status);
+        int updated = userMapper.updateById(user);
+        return updated > 0;
     }
 }
