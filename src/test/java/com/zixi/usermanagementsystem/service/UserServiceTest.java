@@ -14,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 class UserServiceTest {
 
     @Resource
-    private UserService userService;
+    private UserAuthService userAuthService;
+
+    @Resource
+    private UserProfileService userProfileService;
 
     /**
      * 测试用户注册成功
@@ -29,14 +32,14 @@ class UserServiceTest {
         request.setCheckPassword("password123");
 
         // 执行注册
-        Long userId = userService.register(request);
+        Long userId = userAuthService.register(request);
 
         // 验证结果
         Assertions.assertNotNull(userId);
         Assertions.assertTrue(userId > 0);
 
         // 验证用户确实被创建
-        User user = userService.getUserByAccount("testuser123");
+        User user = userProfileService.getUserByAccount("testuser123");
         Assertions.assertNotNull(user);
         Assertions.assertEquals("testuser123", user.getAccount());
         // 验证密码已被加密（不等于明文）
@@ -54,7 +57,7 @@ class UserServiceTest {
         firstRequest.setAccount("duplicateuser");
         firstRequest.setPassword("password123");
         firstRequest.setCheckPassword("password123");
-        userService.register(firstRequest);
+        userAuthService.register(firstRequest);
 
         // 再次使用相同账号注册
         UserRegisterRequest secondRequest = new UserRegisterRequest();
@@ -64,7 +67,7 @@ class UserServiceTest {
 
         // 验证抛出异常
         BusinessException exception = Assertions.assertThrows(BusinessException.class, () -> {
-            userService.register(secondRequest);
+            userAuthService.register(secondRequest);
         });
 
         // 验证异常信息
