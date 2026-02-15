@@ -77,11 +77,6 @@ public class UserController {
         return BaseResponse.success(user.buildUserVO());
     }
 
-    @GetMapping("/{userId}")
-    public BaseResponse<User> getUserById(@PathVariable Long userId) {
-        return BaseResponse.success(userService.getUserById(userId));
-    }
-
     /**
      * 更新当前登录用户的个人资料
      * @param userUpdateRequest 用户更新请求

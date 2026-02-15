@@ -55,6 +55,19 @@ public class AdminController {
     }
 
     /**
+     * 根据ID获取用户信息
+     * @param userId 用户ID
+     * @return 用户信息
+     */
+    @GetMapping("/users/{userId}")
+    public BaseResponse<User> getUserById(@PathVariable Long userId) {
+        if (!isAdmin()) {
+            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
+        }
+        return BaseResponse.success(userService.getUserById(userId));
+    }
+
+    /**
      * 判断当前用户是否为管理员（基于 Spring Security）
      */
     private Boolean isAdmin() {
