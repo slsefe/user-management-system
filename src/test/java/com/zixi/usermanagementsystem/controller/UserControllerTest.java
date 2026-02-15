@@ -6,6 +6,7 @@ import com.zixi.usermanagementsystem.mapper.UserMapper;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.request.UserUpdateRequest;
+import com.zixi.usermanagementsystem.model.request.UserChangePasswordRequest;
 import com.zixi.usermanagementsystem.service.UserService;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -301,6 +302,119 @@ class UserControllerTest {
 
         // 3. 执行请求并验证响应
         mockMvc.perform(put("/api/users/profile")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        // 4. 清理 SecurityContext
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试修改密码接口 - 未登录
+     * 验证：未登录用户调用 /password 时，返回未登录错误
+     */
+    @Test
+    void testChangePasswordNotLogin() throws Exception {
+        UserChangePasswordRequest request = new UserChangePasswordRequest();
+        request.setOldPassword("OldPassword123");
+        request.setNewPassword("NewPassword123");
+        request.setCheckPassword("NewPassword123");
+
+        mockMvc.perform(put("/api/users/password")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ErrorCode.NO_LOGIN.getCode()));
+    }
+
+    /**
+     * 测试修改密码接口 - 成功修改
+     * 验证：已登录用户修改密码成功
+     */
+    @Test
+    void testChangePasswordSuccess() throws Exception {
+        // 1. 准备修改密码请求
+        UserChangePasswordRequest request = new UserChangePasswordRequest();
+        request.setOldPassword("OldPassword123");
+        request.setNewPassword("NewPassword123");
+        request.setCheckPassword("NewPassword123");
+
+        // 2. 手动设置 SecurityContext
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("testuser", null,
+                        java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // 3. 执行请求并验证响应（Service 层方法为 void）
+        mockMvc.perform(put("/api/users/password")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value(ErrorCode.SUCCESS.getCode()))
+                .andExpect(jsonPath("$.data").value(true));
+
+        // 4. 清理 SecurityContext
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试修改密码接口 - 密码长度不足
+     * 验证：新密码长度小于8位时，返回 400
+     */
+    @Test
+    void testChangePasswordTooShort() throws Exception {
+        // 1. 准备无效请求（新密码长度不足）
+        UserChangePasswordRequest request = new UserChangePasswordRequest();
+        request.setOldPassword("OldPassword123");
+        request.setNewPassword("pwd12");  // 不足8位
+        request.setCheckPassword("pwd12");
+
+        // 2. 手动设置 SecurityContext
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("testuser", null,
+                        java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // 3. 执行请求并验证响应
+        mockMvc.perform(put("/api/users/password")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        // 4. 清理 SecurityContext
+        SecurityContextHolder.clearContext();
+    }
+
+    /**
+     * 测试修改密码接口 - 密码格式不符合要求
+     * 验证：密码未包含大小写字母和数字时，返回 400
+     */
+    @Test
+    void testChangePasswordInvalidFormat() throws Exception {
+        // 1. 准备无效请求（密码格式不符合要求）
+        UserChangePasswordRequest request = new UserChangePasswordRequest();
+        request.setOldPassword("OldPassword123");
+        request.setNewPassword("password123");  // 没有大写字母
+        request.setCheckPassword("password123");
+
+        // 2. 手动设置 SecurityContext
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("testuser", null,
+                        java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextImpl securityContext = new SecurityContextImpl(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // 3. 执行请求并验证响应
+        mockMvc.perform(put("/api/users/password")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
