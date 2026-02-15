@@ -6,7 +6,8 @@ import com.zixi.usermanagementsystem.model.request.UserChangePasswordRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.request.UserUpdateRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
-import com.zixi.usermanagementsystem.service.UserService;
+import com.zixi.usermanagementsystem.service.UserAuthService;
+import com.zixi.usermanagementsystem.service.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,14 +32,15 @@ import java.util.Map;
 @CrossOrigin(origins = {"http://localhost:3000", "http://81.70.182.9"}, allowCredentials = "true")
 public class UserController {
 
-    private final UserService userService;
+    private final UserAuthService userAuthService;
+    private final UserProfileService userProfileService;
 
     @PostMapping("/register")
     public BaseResponse<Long> register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
             return BaseResponse.fail(ErrorCode.NULL_ERROR);
         }
-        return BaseResponse.success(userService.register(userRegisterRequest));
+        return BaseResponse.success(userAuthService.register(userRegisterRequest));
     }
 
     @GetMapping("/current")
@@ -70,7 +72,7 @@ public class UserController {
             return BaseResponse.fail(ErrorCode.NO_LOGIN);
         }
         String account = authentication.getName();
-        User user = userService.getUserByAccount(account);
+        User user = userProfileService.getUserByAccount(account);
         if (user == null) {
             return BaseResponse.fail(ErrorCode.NULL_ERROR);
         }
@@ -89,7 +91,7 @@ public class UserController {
             return BaseResponse.fail(ErrorCode.NO_LOGIN);
         }
         String account = authentication.getName();
-        User updatedUser = userService.updateUserInfo(account, userUpdateRequest);
+        User updatedUser = userProfileService.updateUserInfo(account, userUpdateRequest);
         return BaseResponse.success(updatedUser);
     }
 
@@ -105,7 +107,7 @@ public class UserController {
             return BaseResponse.fail(ErrorCode.NO_LOGIN);
         }
         String account = authentication.getName();
-        userService.changePassword(account, changePasswordRequest);
+        userProfileService.changePassword(account, changePasswordRequest);
         return BaseResponse.success(true);
     }
 }

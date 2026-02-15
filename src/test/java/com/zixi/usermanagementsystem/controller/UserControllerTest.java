@@ -7,6 +7,8 @@ import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import com.zixi.usermanagementsystem.model.request.UserUpdateRequest;
 import com.zixi.usermanagementsystem.model.request.UserChangePasswordRequest;
+import com.zixi.usermanagementsystem.service.UserAuthService;
+import com.zixi.usermanagementsystem.service.UserProfileService;
 import com.zixi.usermanagementsystem.service.UserService;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -45,9 +47,13 @@ class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    // 使用 @MockitoBean 模拟 UserService Bean，避免依赖真实 Service 层
+    // 使用 @MockitoBean 模拟 UserAuthService Bean
     @MockitoBean
-    private UserService userService;
+    private UserAuthService userAuthService;
+
+    // 使用 @MockitoBean 模拟 UserProfileService Bean
+    @MockitoBean
+    private UserProfileService userProfileService;
 
     // 使用 @MockitoBean 模拟 UserMapper Bean，避免 MyBatis 初始化问题
     @MockitoBean
@@ -72,7 +78,7 @@ class UserControllerTest {
         request.setCheckPassword("password123");
 
         // 2. Mock Service 层返回 userId = 1
-        when(userService.register(any(UserRegisterRequest.class))).thenReturn(1L);
+        when(userAuthService.register(any(UserRegisterRequest.class))).thenReturn(1L);
 
         // 3. 执行 POST 请求并验证响应
         mockMvc.perform(post("/api/users/register")
@@ -203,7 +209,7 @@ class UserControllerTest {
         SecurityContextHolder.setContext(securityContext);
 
         // 3. Mock Service 层返回用户信息
-        when(userService.getUserByAccount("testuser")).thenReturn(mockUser);
+        when(userProfileService.getUserByAccount("testuser")).thenReturn(mockUser);
 
         // 4. 执行请求并验证响应
         mockMvc.perform(get("/api/users/profile"))
@@ -266,7 +272,7 @@ class UserControllerTest {
         SecurityContextHolder.setContext(securityContext);
 
         // 4. Mock Service 层返回更新后的用户
-        when(userService.updateUserInfo("testuser", request)).thenReturn(updatedUser);
+        when(userProfileService.updateUserInfo("testuser", request)).thenReturn(updatedUser);
 
         // 5. 执行请求并验证响应
         mockMvc.perform(put("/api/users/profile")

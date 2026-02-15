@@ -5,7 +5,7 @@ import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.common.PageResult;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserQueryRequest;
-import com.zixi.usermanagementsystem.service.UserService;
+import com.zixi.usermanagementsystem.service.UserManageService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -32,7 +32,7 @@ import java.util.List;
 @CrossOrigin(origins = {"http://localhost:3000", "http://81.70.182.9"}, allowCredentials = "true")
 public class AdminController {
 
-    private final UserService userService;
+    private final UserManageService userManageService;
 
     /**
      * 分页查询用户列表
@@ -44,7 +44,7 @@ public class AdminController {
         if (!isAdmin()) {
             return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
-        return BaseResponse.success(userService.queryUserPage(queryRequest));
+        return BaseResponse.success(userManageService.queryUserPage(queryRequest));
     }
 
     /**
@@ -57,7 +57,7 @@ public class AdminController {
         if (!isAdmin()) {
             return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
-        return BaseResponse.success(userService.queryUserList());
+        return BaseResponse.success(userManageService.queryUserList());
     }
 
     /**
@@ -70,7 +70,7 @@ public class AdminController {
         if (!isAdmin()) {
             return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
-        return BaseResponse.success(userService.removeById(userId));
+        return BaseResponse.success(userManageService.removeUserById(userId));
     }
 
     /**
@@ -83,7 +83,7 @@ public class AdminController {
         if (!isAdmin()) {
             return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
-        return BaseResponse.success(userService.getUserById(userId));
+        return BaseResponse.success(userManageService.getUserById(userId));
     }
 
     /**
