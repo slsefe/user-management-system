@@ -32,3 +32,22 @@ server:
   port: 8080
   servlet:
     context-path: /user-center
+
+# 腾讯云短信配置（新用户免费100条）
+# 申请地址：https://cloud.tencent.com/product/sms
+tencent:
+  sms:
+    # 是否启用短信发送（默认关闭，配置完成后设为 true）
+    enabled: false
+    # 腾讯云 SecretId（在腾讯云控制台获取）
+    secret-id: your-secret-id
+    # 腾讯云 SecretKey（在腾讯云控制台获取）
+    secret-key: your-secret-key
+    # 短信应用 SDK AppID
+    app-id: your-app-id
+    # 短信签名（需审核通过）
+    sign-name: your-sign-name
+    # 短信模板 ID（需审核通过）
+    template-id: your-template-id
+    # 地域，默认广州
+    region: ap-guangzhou
