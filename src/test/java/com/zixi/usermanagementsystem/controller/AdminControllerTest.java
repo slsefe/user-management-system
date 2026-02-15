@@ -4,10 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.common.PageResult;
 import com.zixi.usermanagementsystem.constant.UserRoleEnum;
+import com.zixi.usermanagementsystem.mapper.LoginHistoryMapper;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.model.request.UserQueryRequest;
 import com.zixi.usermanagementsystem.model.request.UserRoleUpdateRequest;
+import com.zixi.usermanagementsystem.service.LoginHistoryService;
 import com.zixi.usermanagementsystem.service.UserManageService;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,7 +43,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * AdminController 单元测试类
  * 测试管理员相关接口
  */
-@WebMvcTest(controllers = AdminController.class, excludeAutoConfiguration = org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration.class)
+@WebMvcTest(controllers = AdminController.class, excludeAutoConfiguration = {
+        org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
+})
 @AutoConfigureMockMvc(addFilters = false)
 class AdminControllerTest {
 
@@ -50,6 +55,12 @@ class AdminControllerTest {
 
     @MockitoBean
     private UserManageService userManageService;
+
+    @MockitoBean
+    private LoginHistoryService loginHistoryService;
+
+    @MockitoBean
+    private LoginHistoryMapper loginHistoryMapper;
 
     @MockitoBean
     private UserMapper userMapper;
