@@ -1,18 +1,14 @@
 package com.zixi.usermanagementsystem.service;
-import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zixi.usermanagementsystem.common.ErrorCode;
+import com.zixi.usermanagementsystem.exception.BusinessException;
 import com.zixi.usermanagementsystem.model.domain.User;
+import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 class UserServiceTest {
@@ -20,154 +16,59 @@ class UserServiceTest {
     @Resource
     private UserService userService;
 
+    /**
+     * 测试用户注册成功
+     */
     @Test
-    void testSave() {
-        User user = buildUserWithDefaultValue();
-        userService.save(user);
-        Assertions.assertNotNull(user.getId());
-        System.out.println("user = " + user);
+    @Transactional
+    void testRegisterSuccess() {
+        // 准备测试数据
+        UserRegisterRequest request = new UserRegisterRequest();
+        request.setAccount("testuser123");
+        request.setPassword("password123");
+        request.setCheckPassword("password123");
+
+        // 执行注册
+        Long userId = userService.register(request);
+
+        // 验证结果
+        Assertions.assertNotNull(userId);
+        Assertions.assertTrue(userId > 0);
+
+        // 验证用户确实被创建
+        User user = userService.getUserByAccount("testuser123");
+        Assertions.assertNotNull(user);
+        Assertions.assertEquals("testuser123", user.getAccount());
+        // 验证密码已被加密（不等于明文）
+        Assertions.assertNotEquals("password123", user.getPassword());
     }
 
+    /**
+     * 测试注册时账号已存在
+     */
     @Test
-    void testSaveBatch() {
-        List<User> users = new ArrayList<>();
-        users.add(buildUserWithDefaultValue());
-        users.add(buildUserWithDefaultValue());
-        boolean success = userService.saveBatch(users);
-        Assertions.assertTrue(success);
-        System.out.println("users = " + users);
+    @Transactional
+    void testRegisterAccountDuplicate() {
+        // 先注册一个用户
+        UserRegisterRequest firstRequest = new UserRegisterRequest();
+        firstRequest.setAccount("duplicateuser");
+        firstRequest.setPassword("password123");
+        firstRequest.setCheckPassword("password123");
+        userService.register(firstRequest);
+
+        // 再次使用相同账号注册
+        UserRegisterRequest secondRequest = new UserRegisterRequest();
+        secondRequest.setAccount("duplicateuser");
+        secondRequest.setPassword("password456");
+        secondRequest.setCheckPassword("password456");
+
+        // 验证抛出异常
+        BusinessException exception = Assertions.assertThrows(BusinessException.class, () -> {
+            userService.register(secondRequest);
+        });
+
+        // 验证异常信息
+        Assertions.assertEquals(ErrorCode.PARAMS_ERROR.getCode(), exception.getCode());
+        Assertions.assertEquals("user account duplicated", exception.getDescription());
     }
-
-    @Test
-    void testSaveBatchWithBatchSize() {
-        List<User> users = new ArrayList<>();
-        users.add(buildUserWithDefaultValue());
-        users.add(buildUserWithDefaultValue());
-        boolean success = userService.saveBatch(users, 1);
-        Assertions.assertTrue(success);
-        System.out.println("users = " + users);
-    }
-
-    @Test
-    void testSaveOrUpdate() {
-        User user = buildUserWithDefaultValue();
-        user.setId(1L);
-        boolean success = userService.saveOrUpdate(user);
-        Assertions.assertTrue(success);
-        System.out.println("user = " + user);
-    }
-
-    @Test
-    void testSaveOrUpdateBatch() {
-        List<User> users = new ArrayList<>();
-        User newUser = buildUserWithDefaultValue();
-        users.add(newUser);
-        User existedUser = buildUserWithDefaultValue();
-        existedUser.setId(1L);
-        users.add(existedUser);
-        boolean success = userService.saveOrUpdateBatch(users);
-        Assertions.assertTrue(success);
-        System.out.println("users = " + users);
-    }
-
-    @Test
-    void testGetOne() {
-        Wrapper<User> wrapper = Wrappers.<User>lambdaQuery().eq(User::getId, 1L);
-        User user = userService.getOne(wrapper);
-        System.out.println("user = " + user);
-    }
-
-    @Test
-    void testGetById() {
-        User user = userService.getById(1);
-        System.out.println("user = " + user);
-    }
-
-    @Test
-    void testCount() {
-        long count = userService.count();
-        System.out.println("count = " + count);
-    }
-
-    @Test
-    void testList() {
-        List<User> users = userService.list();
-        System.out.println("users = " + users);
-    }
-
-    @Test
-    void testUpdateById() {
-        User user = buildUserWithDefaultValue();
-        user.setId(1L);
-        boolean success = userService.updateById(user);
-        Assertions.assertTrue(success);
-    }
-
-    @Test
-    void testUpdateWithWrapper() {
-        User user = buildUserWithDefaultValue();
-        user.setId(1L);
-        boolean success = userService.update(Wrappers.<User>lambdaUpdate().eq(User::getId, user.getId()));
-        Assertions.assertTrue(success);
-    }
-
-    @Test
-    void testUpdateBatchById() {
-        List<User> users = new ArrayList<>();
-        users.add(buildUserWithDefaultValue());
-        users.add(buildUserWithDefaultValue());
-        boolean success = userService.updateBatchById(users);
-        Assertions.assertTrue(success);
-    }
-
-    @Test
-    void testRemoveById() {
-        boolean success = userService.removeById(1L);
-        Assertions.assertTrue(success);
-    }
-
-    @Test
-    void testRemoveByIds() {
-        List<User> users = new ArrayList<>();
-        users.add(buildUserWithDefaultValue());
-        users.add(buildUserWithDefaultValue());
-        boolean success = userService.removeByIds(users);
-        Assertions.assertTrue(success);
-    }
-
-    @Test
-    void testRemoveBatchByIds() {
-        List<User> users = new ArrayList<>();
-        users.add(buildUserWithDefaultValue());
-        users.add(buildUserWithDefaultValue());
-        boolean success = userService.removeBatchByIds(users);
-        Assertions.assertTrue(success);
-    }
-
-    @Test
-    void testPageWithoutCondition() {
-        IPage<User> page = Page.of(1, 3);
-        IPage<User> pagedResult = userService.page(page);
-        pagedResult.getRecords().forEach(System.out::println);
-    }
-
-
-
-    private static User buildUserWithDefaultValue() {
-        User user = new User();
-        user.setUsername("slsefe");
-        user.setAccount("20250101");
-        user.setAvatarUrl("");
-        user.setGender(0);
-        user.setPassword("password");
-        user.setPhone("123");
-        user.setEmail("456");
-        user.setCreateTime(LocalDateTime.now());
-        user.setUpdateTime(LocalDateTime.now());
-        user.setStatus(0);
-        user.setDeleted(0);
-        return user;
-    }
-
-
 }

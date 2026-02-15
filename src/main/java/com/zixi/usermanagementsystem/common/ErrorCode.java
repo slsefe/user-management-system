@@ -12,6 +12,7 @@ public enum ErrorCode {
     NULL_ERROR(40001, "request param is null"),
     NO_LOGIN(40100, "no login"),
     NO_PERMISSION(40101, "no permission"),
+    OPERATION_ERROR(50001, "operation error"),
     SYSTEM_ERROR(50000, "");
 
     private final int code;

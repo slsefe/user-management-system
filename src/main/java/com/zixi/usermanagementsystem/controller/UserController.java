@@ -2,12 +2,11 @@ package com.zixi.usermanagementsystem.controller;
 
 import com.zixi.usermanagementsystem.common.BaseResponse;
 import com.zixi.usermanagementsystem.common.ErrorCode;
-import com.zixi.usermanagementsystem.constant.UserConstant;
+import com.zixi.usermanagementsystem.model.request.UserChangePasswordRequest;
 import com.zixi.usermanagementsystem.model.request.UserRegisterRequest;
+import com.zixi.usermanagementsystem.model.request.UserUpdateRequest;
 import com.zixi.usermanagementsystem.model.domain.User;
 import com.zixi.usermanagementsystem.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,16 +14,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -42,11 +40,6 @@ public class UserController {
         }
         return BaseResponse.success(userService.register(userRegisterRequest));
     }
-
-//    @PostMapping("/login")
-//    public BaseResponse<User> login(@RequestBody @Valid UserLoginRequest userLoginRequest, HttpSession httpSession) {
-//        return BaseResponse.success(userService.login(userLoginRequest, httpSession));
-//    }
 
     @GetMapping("/current")
     public ResponseEntity<?> getCurrentUser() {
@@ -66,37 +59,58 @@ public class UserController {
         return ResponseEntity.ok(userInfo);
     }
 
-//    @PostMapping("/logout")
-//    public BaseResponse<Void> logout(HttpSession httpSession) {
-//        if (httpSession == null) {
-//            return BaseResponse.success(null);
-//        }
-//        userService.logout(httpSession);
-//        return BaseResponse.success(null);
-//    }
-
-    @GetMapping
-    public BaseResponse<List<User>> query(HttpServletRequest request) {
-        // 用户接口鉴权，仅管理员有权限
-        if (!isAdmin(request)) {
-            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
+    /**
+     * 获取当前登录用户的详细信息
+     * @return 当前用户信息（隐藏敏感字段）
+     */
+    @GetMapping("/profile")
+    public BaseResponse<User> getCurrentUserProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return BaseResponse.fail(ErrorCode.NO_LOGIN);
         }
-        return BaseResponse.success(userService.queryUserList());
+        String account = authentication.getName();
+        User user = userService.getUserByAccount(account);
+        if (user == null) {
+            return BaseResponse.fail(ErrorCode.NULL_ERROR);
+        }
+        return BaseResponse.success(user.buildUserVO());
     }
 
-    @DeleteMapping("/{userId}")
-    public BaseResponse<Boolean> delete(@PathVariable Long userId, HttpServletRequest request) {
-        if (!isAdmin(request)) {
-            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
-        }
-        return BaseResponse.success(userService.removeById(userId));
+    @GetMapping("/{userId}")
+    public BaseResponse<User> getUserById(@PathVariable Long userId) {
+        return BaseResponse.success(userService.getUserById(userId));
     }
 
-    private Boolean isAdmin(HttpServletRequest request) {
-        User currentUser = (User) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
-        if (currentUser == null) {
-            return false;
+    /**
+     * 更新当前登录用户的个人资料
+     * @param userUpdateRequest 用户更新请求
+     * @return 更新后的用户信息
+     */
+    @PutMapping("/profile")
+    public BaseResponse<User> updateCurrentUserProfile(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return BaseResponse.fail(ErrorCode.NO_LOGIN);
         }
-        return currentUser.getRole() == UserConstant.ADMIN_ROLE;
+        String account = authentication.getName();
+        User updatedUser = userService.updateUserInfo(account, userUpdateRequest);
+        return BaseResponse.success(updatedUser);
+    }
+
+    /**
+     * 修改当前登录用户的密码
+     * @param changePasswordRequest 修改密码请求
+     * @return 修改结果
+     */
+    @PutMapping("/password")
+    public BaseResponse<Boolean> changePassword(@RequestBody @Valid UserChangePasswordRequest changePasswordRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return BaseResponse.fail(ErrorCode.NO_LOGIN);
+        }
+        String account = authentication.getName();
+        userService.changePassword(account, changePasswordRequest);
+        return BaseResponse.success(true);
     }
 }

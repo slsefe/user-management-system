@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.zixi.usermanagementsystem.constant.UserRoleEnum;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -95,7 +96,7 @@ public class User implements Serializable {
      * 用户角色，0-普通用户，1-管理员
      */
     @TableField(value = "role")
-    private Integer role;
+    private UserRoleEnum role;
 
     /**
      * 用户返回信息，隐藏敏感信息

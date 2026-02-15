@@ -2,6 +2,7 @@ package com.zixi.usermanagementsystem.security;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zixi.usermanagementsystem.common.ErrorCode;
+import com.zixi.usermanagementsystem.constant.UserRoleEnum;
 import com.zixi.usermanagementsystem.exception.BusinessException;
 import com.zixi.usermanagementsystem.mapper.UserMapper;
 import com.zixi.usermanagementsystem.model.domain.User;
@@ -29,7 +30,7 @@ public class CustomUserDetailService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(username)
                 .password(user.getPassword())
-                .roles(user.getRole() == 0 ? "USER" : "ADMIN")
+                .roles(user.getRole() == UserRoleEnum.USER ? "USER" : "ADMIN")
                 .build();
     }
 }
