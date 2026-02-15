@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static com.zixi.usermanagementsystem.service.UserManageService.STATUS_DISABLED;
+import static com.zixi.usermanagementsystem.service.UserManageService.STATUS_NORMAL;
+
 /**
  * 管理员接口控制器
  * 所有接口仅管理员可访问
@@ -71,6 +74,32 @@ public class AdminController {
             return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
         return BaseResponse.success(userManageService.removeUserById(userId));
+    }
+
+    /**
+     * 禁用用户
+     * @param userId 用户ID
+     * @return 是否禁用成功
+     */
+    @PostMapping("/users/{userId}/disable")
+    public BaseResponse<Boolean> disableUser(@PathVariable Long userId) {
+        if (!isAdmin()) {
+            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
+        }
+        return BaseResponse.success(userManageService.updateUserStatus(userId, STATUS_DISABLED));
+    }
+
+    /**
+     * 启用用户
+     * @param userId 用户ID
+     * @return 是否启用成功
+     */
+    @PostMapping("/users/{userId}/enable")
+    public BaseResponse<Boolean> enableUser(@PathVariable Long userId) {
+        if (!isAdmin()) {
+            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
+        }
+        return BaseResponse.success(userManageService.updateUserStatus(userId, STATUS_NORMAL));
     }
 
     /**
