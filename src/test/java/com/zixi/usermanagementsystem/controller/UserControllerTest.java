@@ -9,7 +9,6 @@ import com.zixi.usermanagementsystem.model.request.UserUpdateRequest;
 import com.zixi.usermanagementsystem.model.request.UserChangePasswordRequest;
 import com.zixi.usermanagementsystem.service.UserAuthService;
 import com.zixi.usermanagementsystem.service.UserProfileService;
-import com.zixi.usermanagementsystem.service.UserService;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
