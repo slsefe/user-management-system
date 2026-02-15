@@ -3,9 +3,12 @@ package com.zixi.usermanagementsystem.controller;
 import com.zixi.usermanagementsystem.common.BaseResponse;
 import com.zixi.usermanagementsystem.common.ErrorCode;
 import com.zixi.usermanagementsystem.common.PageResult;
+import com.zixi.usermanagementsystem.model.domain.LoginHistory;
 import com.zixi.usermanagementsystem.model.domain.User;
+import com.zixi.usermanagementsystem.model.request.LoginHistoryQueryRequest;
 import com.zixi.usermanagementsystem.model.request.UserQueryRequest;
 import com.zixi.usermanagementsystem.model.request.UserRoleUpdateRequest;
+import com.zixi.usermanagementsystem.service.LoginHistoryService;
 import com.zixi.usermanagementsystem.service.UserManageService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -38,6 +41,7 @@ import static com.zixi.usermanagementsystem.service.UserManageService.STATUS_NOR
 public class AdminController {
 
     private final UserManageService userManageService;
+    private final LoginHistoryService loginHistoryService;
 
     /**
      * 分页查询用户列表
@@ -129,6 +133,19 @@ public class AdminController {
             return BaseResponse.fail(ErrorCode.NO_PERMISSION);
         }
         return BaseResponse.success(userManageService.getUserById(userId));
+    }
+
+    /**
+     * 分页查询登录历史
+     * @param queryRequest 查询请求
+     * @return 分页结果
+     */
+    @PostMapping("/login-history/query")
+    public BaseResponse<PageResult<LoginHistory>> queryLoginHistory(@RequestBody @Valid LoginHistoryQueryRequest queryRequest) {
+        if (!isAdmin()) {
+            return BaseResponse.fail(ErrorCode.NO_PERMISSION);
+        }
+        return BaseResponse.success(loginHistoryService.queryLoginHistory(queryRequest));
     }
 
     /**

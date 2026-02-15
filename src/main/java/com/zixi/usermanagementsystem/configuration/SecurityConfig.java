@@ -1,5 +1,7 @@
 package com.zixi.usermanagementsystem.configuration;
 
+import com.zixi.usermanagementsystem.security.CustomAuthenticationFailureHandler;
+import com.zixi.usermanagementsystem.security.CustomAuthenticationSuccessHandler;
 import com.zixi.usermanagementsystem.security.SerializableRequestCache;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
@@ -18,8 +20,18 @@ public class SecurityConfig {
     @Resource
     private SerializableRequestCache requestCache;
 
-    public SecurityConfig(SerializableRequestCache requestCache) {
+    @Resource
+    private CustomAuthenticationSuccessHandler successHandler;
+
+    @Resource
+    private CustomAuthenticationFailureHandler failureHandler;
+
+    public SecurityConfig(SerializableRequestCache requestCache,
+                          CustomAuthenticationSuccessHandler successHandler,
+                          CustomAuthenticationFailureHandler failureHandler) {
         this.requestCache = requestCache;
+        this.successHandler = successHandler;
+        this.failureHandler = failureHandler;
     }
 
     @Bean
@@ -38,15 +50,8 @@ public class SecurityConfig {
                         .loginProcessingUrl("/api/users/login")   // 登录接口
                         .usernameParameter("account")
                         .passwordParameter("password")
-                        .successHandler((request, response, authentication) -> {
-                            // 登录成功后，返回 JSON（不跳转）
-                            response.setStatus(200);
-                            response.getWriter().print("Login success");
-                        })
-                        .failureHandler((request, response, exception) -> {
-                            response.setStatus(401);
-                            response.getWriter().print("Invalid credentials");
-                        })
+                        .successHandler(successHandler)
+                        .failureHandler(failureHandler)
                 )
 
                 // 自定义登出
